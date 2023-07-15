@@ -6,6 +6,7 @@ class config:
 
     playlist_url = 'https://youtube.com/playlist?list=PLtBw6njQRU-rwp5__7C0oIVt26ZgjG9NI'
     DEBUG = True
+    pinecone_index_name = 'youtubeplaylistqa'
 
     # Paths
     root_artifact_dir = Path('Downloaded_artifacts')

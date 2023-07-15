@@ -6,6 +6,9 @@ from langchain.document_loaders import DataFrameLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import TokenTextSplitter
+from langchain.vectorstores import Pinecone
+import pinecone
+from dotenv import load_dotenv
 
 
 def get_data(transcription_artifact_name : str , total_episodes = None):
@@ -15,7 +18,7 @@ def get_data(transcription_artifact_name : str , total_episodes = None):
 
     # Get data from wandb artifacts
     embeddings_artifacts = wandb.use_artifact(transcription_artifact_name, type = 'dataset')
-    embeddings_artifacts_dir = embeddings_artifacts.download(config.download_path)
+    embeddings_artifacts_dir = embeddings_artifacts.download(config.root_artifact_dir)
     filename = transcription_artifact_name.split(":")[0].split("/")[-1]
     df = pd.read_csv(os.path.join(embeddings_artifacts_dir, f"{filename}.csv"))
     if total_episodes is not None:
@@ -24,16 +27,31 @@ def get_data(transcription_artifact_name : str , total_episodes = None):
     run.finish()
     return df
 
-def perform_embeddings(df: pd.DataFrame):
+def perform_embeddings(df: pd.DataFrame, openai_api_key, pinecone_api_key):
+    # Load data in form of langchain
     loader = DataFrameLoader(df, page_content_column="transcription")
     data = loader.load()
+
+    # SPlit data using tokens
     text_splitter = TokenTextSplitter.from_tiktoken_encoder(chunk_size=1000, chunk_overlap=0)
-    docs = text_splitter.split_documents(data)
-    return docs
+    docs = text_splitter.split_documents(data)\
+    
+    # Get embeddings for data splitted using chunks
+
+    embeddings = OpenAIEmbeddings(openai_api_key)
+    pinecone.init(api_key=pinecone_api_key,
+                  environment='asia-southeast1-gcp-free')
+    
+    docs_search = Pinecone.from_texts([d.page_content for d in docs], embeddings, index_name=config.pinecone_index_name)
+    return docs_search
 
 
 
 if __name__ == "__main__": 
+    load_dotenv()
+
+    openai_api = os.environ['OPENAI_API_KEY']
+    pinecone_api = os.environ['PINECONE_API_KEY']
     df = get_data(config.transcription_artifacts_path)
-    docs = perform_embeddings(df)
-    print(docs)
+    docs = perform_embeddings(df,openai_api, pinecone_api)
+    

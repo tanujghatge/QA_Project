@@ -27,7 +27,7 @@ def get_transcription(playlist_link, episodes = None):
     # wandb
     run = wandb.init(project= config.project_name, job_type= 'upload Transcripts')
     transcription_artifacts = wandb.Artifact('Transcription_Artifacts',type = 'dataset')
-    transcription_table = wandb.Table(columns = ['Title','Video_Title' ,'Video_Link','Transcription', 'Video_Length', 'Video_Data'])
+    transcription_table = wandb.Table(columns = ['Playlist_Title','Video_Title' ,'Video_Link','Transcription', 'Video_Length', 'Video_Date'])
 
     transcriptions = []
     for _ in links:

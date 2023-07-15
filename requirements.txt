@@ -8,3 +8,4 @@ wandb
 pathlib
 langchain
 tiktoken
+pinecone-client
