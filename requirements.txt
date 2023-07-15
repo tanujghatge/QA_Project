@@ -1,0 +1,9 @@
+pandas
+numpy
+openai
+python-dotenv
+pytube
+gradio_client
+wandb
+pathlib
+langchain
