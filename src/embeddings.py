@@ -6,7 +6,10 @@ from langchain.document_loaders import DataFrameLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import TokenTextSplitter
+from langchain.memory import ConversationBufferMemory
 from langchain.vectorstores import Pinecone
+from langchain.llms import OpenAI
+from langchain.chains import ConversationalRetrievalChain
 import pinecone
 from dotenv import load_dotenv
 
@@ -27,7 +30,7 @@ def get_data(transcription_artifact_name : str , total_episodes = None):
     run.finish()
     return df
 
-def perform_embeddings(df: pd.DataFrame, openai_api_key, pinecone_api_key):
+def perform_embeddings(df: pd.DataFrame, OPENAI_API_KEY, pinecone_api_key):
     # Load data in form of langchain
     loader = DataFrameLoader(df, page_content_column="transcription")
     data = loader.load()
@@ -38,12 +41,20 @@ def perform_embeddings(df: pd.DataFrame, openai_api_key, pinecone_api_key):
     
     # Get embeddings for data splitted using chunks
 
-    embeddings = OpenAIEmbeddings(openai_api_key)
+    embeddings = OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY)
     pinecone.init(api_key=pinecone_api_key,
                   environment='asia-southeast1-gcp-free')
     
     docs_search = Pinecone.from_texts([d.page_content for d in docs], embeddings, index_name=config.pinecone_index_name)
     return docs_search
+
+def get_conversation_chain(vectorspace):
+    llm = OpenAI()
+    memory = ConversationBufferMemory(memory_key='chat_history',return_messages=True)
+    conversation_chain = ConversationalRetrievalChain.from_llm(llm = llm,
+                                                               retriever=vectorspace.as_retriever(),
+                                                               memory = memory)
+    return conversation_chain
 
 
 
