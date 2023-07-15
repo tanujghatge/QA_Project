@@ -7,3 +7,4 @@ gradio_client
 wandb
 pathlib
 langchain
+tiktoken

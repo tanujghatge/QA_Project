@@ -4,7 +4,8 @@ from dataclasses import dataclass
 @dataclass
 class config:
 
-    playlist_url = 'https://youtube.com/playlist?list=PLjq9mRS1PfGAuL41Q1vIPlSzQuuJibbhg'
+    playlist_url = 'https://youtube.com/playlist?list=PLtBw6njQRU-rwp5__7C0oIVt26ZgjG9NI'
+    DEBUG = True
 
     # Paths
     root_artifact_dir = Path('Downloaded_artifacts')
