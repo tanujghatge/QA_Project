@@ -7,7 +7,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import TokenTextSplitter
 from langchain.memory import ConversationBufferMemory
-from langchain.vectorstores import Pinecone
+from langchain.vectorstores import Pinecone, FAISS
 from langchain.llms import OpenAI
 from langchain.chains import ConversationalRetrievalChain
 import pinecone
@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 def get_data(transcription_artifact_name : str , total_episodes = None):
     if config.DEBUG == True:
         total_episodes = 3
-    run = wandb.init(project= config.project_name, job_type = 'perform_embeddings')
+    run = wandb.init(project= config.project_name, job_type = 'get_data')
 
     # Get data from wandb artifacts
     embeddings_artifacts = wandb.use_artifact(transcription_artifact_name, type = 'dataset')
@@ -30,23 +30,43 @@ def get_data(transcription_artifact_name : str , total_episodes = None):
     run.finish()
     return df
 
-def perform_embeddings(df: pd.DataFrame, OPENAI_API_KEY, pinecone_api_key):
+def perform_embeddings(df: pd.DataFrame, OPENAI_API_KEY):
     # Load data in form of langchain
     loader = DataFrameLoader(df, page_content_column="transcription")
     data = loader.load()
 
     # SPlit data using tokens
     text_splitter = TokenTextSplitter.from_tiktoken_encoder(chunk_size=1000, chunk_overlap=0)
-    docs = text_splitter.split_documents(data)\
+    docs = text_splitter.split_documents(data)
     
+    print("total number of docuements are: ", len(docs))
     # Get embeddings for data splitted using chunks
 
     embeddings = OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY)
-    pinecone.init(api_key=pinecone_api_key,
-                  environment='asia-southeast1-gcp-free')
+
+    # Pinecone Integration
+    # pinecone.init(api_key=pinecone_api_key,
+    #               environment='asia-southeast1-gcp-free')
     
-    docs_search = Pinecone.from_texts([d.page_content for d in docs], embeddings, index_name=config.pinecone_index_name)
-    return docs_search
+    # # docs_search = Pinecone.from_texts([d.page_content for d in docs], embeddings, index_name=config.pinecone_index_name)
+    # docs_search = Pinecone.from_documents(docs, embeddings, index_name=config.pinecone_index_name)
+
+
+    # ChromaDB
+
+    # FAISS
+    FAISS_DB = FAISS.from_documents(docs, embedding=embeddings)
+    FAISS_DB.save_local(folder_path=config.root_artifact_dir,index_name='YT_QA_EMB')
+
+    # Wandb
+    run = wandb.init(project= config.project_name, job_type = 'perform_embeddings')
+    embeddings_artifacts = wandb.Artifact('Embeddings_Artifacts',type = 'dataset')
+    file_to_upload = os.path.join(config.root_artifact_dir,'YT_QA_EMB.faiss')
+    embeddings_artifacts.add_file(file_to_upload)
+    run.log_artifact(embeddings_artifacts)
+    run.finish()   
+    
+    return FAISS_DB
 
 def get_conversation_chain(vectorspace):
     llm = OpenAI()
@@ -64,5 +84,8 @@ if __name__ == "__main__":
     openai_api = os.environ['OPENAI_API_KEY']
     pinecone_api = os.environ['PINECONE_API_KEY']
     df = get_data(config.transcription_artifacts_path)
-    docs = perform_embeddings(df,openai_api, pinecone_api)
-    
+    docs = perform_embeddings(df,openai_api)
+    print(type(docs))
+    query = "What are transformers?"
+    ans = docs.similarity_search(query)
+    print(ans[0].page_content)
