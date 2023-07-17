@@ -14,3 +14,4 @@ class config:
     # wandb
     project_name = 'Youtube_playlist_QA'
     transcription_artifacts_path = 'ghatgetanuj/Youtube_playlist_QA/Transcription_Artifacts:latest'
+    transcription_embeddings_artifact = 'ghatgetanuj/Youtube_playlist_QA/Embeddings_Artifacts:latest'

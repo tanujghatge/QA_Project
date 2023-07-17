@@ -23,9 +23,8 @@ def get_transcription(playlist_link, episodes = None):
     client = Client("https://sanchit-gandhi-whisper-jax.hf.space/")
     playlist_title,links = GetPlaylistLinks(playlist_link)
 
-    links = links[:10]
+    links = links[:6]
     # wandb
-    run = wandb.init(project= config.project_name, job_type= 'upload Transcripts')
     transcription_artifacts = wandb.Artifact('Transcription_Artifacts',type = 'dataset')
     transcription_table = wandb.Table(columns = ['Playlist_Title','Video_Title' ,'Video_Link','Transcription', 'Video_Length', 'Video_Date'])
 
@@ -58,8 +57,7 @@ def get_transcription(playlist_link, episodes = None):
     transcription_artifacts.add_file(csv_file_path)
 
     # push all the files in weights and biases and end the run
-    run.log_artifact(transcription_artifacts)
-    run.finish()
+    wandb.log_artifact(transcription_artifacts)
 
 
 
@@ -67,8 +65,9 @@ def get_transcription(playlist_link, episodes = None):
 if __name__ == "__main__":
   load_dotenv()
   wandb_api = os.environ['WANDB_API']
-   
+  wandb.init(project= config.project_name, job_type= 'upload Transcripts')   
   get_transcription(config.playlist_url)
+  wandb.finish()
    
    
 

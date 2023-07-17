@@ -18,7 +18,7 @@ def GetPlaylistLinks(playlist_link):
   return playlist_name, playlist_urls
 
 playlist_name,links = GetPlaylistLinks('https://youtube.com/playlist?list=PLtBw6njQRU-rwp5__7C0oIVt26ZgjG9NI')
-for i,link in enumerate(links, total = 2):
+for i,link in enumerate(links,):
   print(i,link)
     #     result = client.predict(
     #                     _,	# str  in 'YouTube URL' Textbox component
