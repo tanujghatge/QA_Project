@@ -9,3 +9,4 @@ pathlib
 langchain
 tiktoken
 pinecone-client
+faiss
