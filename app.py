@@ -11,6 +11,7 @@ import wandb
 from dotenv import load_dotenv
 import os
 import faiss
+import streamlit as st
 
 def get_embeddings(artifact_name : str):    
     transcript_embeddings_artifacts = wandb.use_artifact(artifact_name,"dataset")
@@ -46,13 +47,13 @@ def get_answer(question : str):
     # faiss_db = FAISS.load_local(r"C:\Drive data\projectss\QA_PROJECT\Downloaded_artifacts", embeddings, index_name="YT_QA_EMB")
     faiss_db = FAISS.load_local(config.root_artifact_dir, embeddings, index_name="YT_QA_EMB")
 
-    # retriever = faiss_db.as_retriever()
-
+    retriever = faiss_db.as_retriever()
+    retriever.search_kwargs["k"] = 2
     qa = RetrievalQA.from_chain_type(
         llm=ChatOpenAI(temperature=0),
         chain_type="stuff",
-        retriever=faiss_db.as_retriever(),
-        chain_type_kwargs={"k" : 2, "prompt": prompt},
+        retriever=retriever,
+        chain_type_kwargs={ "prompt": prompt},
         return_source_documents=True,
     )
 
@@ -68,5 +69,18 @@ def get_answer(question : str):
 if __name__ == "__main__":
     load_dotenv()
     wandb.init(project=config.project_name, job_type="app")
-    get_embeddings(config.transcription_embeddings_artifact)
     OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+    get_embeddings(config.transcription_embeddings_artifact)
+    st.title("YouTube Playlist Chatbot")
+    st.write("Enter the Question of Youtube Playlist to start the chatbot.")
+    question = st.text_input("Enter the question")
+
+    if st.button("Ask!!"):
+      if question:
+        st.write(get_answer(question))
+      else:
+        st.write("No questions available :(")
+    if st.button("Ask question based on your own playlist URL"):
+      st.write("Enter the URL for a custom playlist chatbot")
+      config.playlist_url2 = st.text_input("Enter the URL")
+
