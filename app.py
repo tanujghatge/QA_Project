@@ -80,7 +80,8 @@ if __name__ == "__main__":
         st.write(get_answer(question))
       else:
         st.write("No questions available :(")
-    if st.button("Ask question based on your own playlist URL"):
+    with st.sidebar:
+      st.subheader("Your custom Playlist URL")
       st.write("Enter the URL for a custom playlist chatbot")
       config.playlist_url2 = st.text_input("Enter the URL")
 

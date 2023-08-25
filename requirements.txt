@@ -9,4 +9,5 @@ pathlib
 langchain
 tiktoken
 pinecone-client
-faiss
+faiss-cpu
+streamlit
